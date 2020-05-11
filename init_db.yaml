@@ -1,0 +1,32 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: init-db
+spec:
+  template:
+    metadata:
+      name:  init-db
+      labels:
+        app: init-postgresdb
+    spec:
+      containers:
+      - image: "docker.io/bitnami/postgresql:11"
+        name: init-db
+        command: [ "bin/sh", "-c", "psql -h postgres -U $POSTGRESQL_USERNAME -d $POSTGRESQL_DATABASE -a -c 'create table if not exists USERS(ID SERIAL PRIMARY KEY, USERNAME VARCHAR(255), FIRSTNAME VARCHAR(255), LASTNAME VARCHAR(255), EMAIL VARCHAR(255), PHONE VARCHAR(255))'" ]
+        env:
+          - name: POSTGRESQL_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: postgres-secret
+                key: username    
+          - name: PGPASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: postgres-secret
+                key: password
+          - name: POSTGRESQL_DATABASE
+            valueFrom:
+              configMapKeyRef:
+                key: POSTGRES_DB
+                name: postgres-config    
+      restartPolicy: Never 

@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: sa-2020-03-rs01
+spec:
+    replicas: 3
+    selector:
+       matchLabels:
+           app: sa-2020-03-app
+    template:
+       metadata:
+          labels:
+             app: sa-2020-03-app
+       spec:
+          containers:
+          - name: sa-2020-03-docker01
+            image: andreyshitov/sa-2020-03-docker01:0.3
+            env:
+            - name: POSTGRES_DB
+              valueFrom:
+                configMapKeyRef:
+                  key: POSTGRES_DB
+                  name: postgres-config         
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: username         
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: password
+            ports:
+              - containerPort: 8000
+            livenessProbe:
+              httpGet:
+                port: 8000
+                path: /health
+              initialDelaySeconds: 10
+              periodSeconds: 5
+              timeoutSeconds: 4
+            readinessProbe:
+              httpGet:
+                port: 8000
+                path: /health
+              initialDelaySeconds: 10
+              periodSeconds: 5
